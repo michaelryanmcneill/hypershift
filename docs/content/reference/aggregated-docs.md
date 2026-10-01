@@ -7042,6 +7042,8 @@ oc patch hostedcluster -n <HOSTED_CLUSTER_NAMESPACE> <HOSTED_CLUSTER_NAME> --typ
 | `maxPodGracePeriod` | int | 600 | Maximum seconds to wait for graceful pod termination before scaling down. |
 | `maxNodeProvisionTime` | string | 15m | Maximum time to wait for a node to provision, in Go duration format (e.g., `15m`, `20m`). |
 | `podPriorityThreshold` | int | -10 | Pods with priority below this threshold won't trigger scale-up. |
+| `kubeClientQPS` | int | 5 | Maximum queries-per-second the autoscaler may send to the kube-apiserver (`--kube-client-qps`). A negative value disables client-side rate limiting. When omitted, the flag is not set. |
+| `kubeClientBurst` | int | 10 | Maximum burst of queries to the kube-apiserver (`--kube-client-burst`). Must be >= 1 when set. When omitted, the flag is not set. |
 
 !!! note
     Defaults listed in the configuration reference tables represent the cluster autoscaler's effective behavior when the field is omitted. The only API-enforced default is `scaling`, which defaults to `ScaleUpAndScaleDown`.
@@ -46921,6 +46923,35 @@ Options include:
 * Random - selects a group randomly.
 If not specified, <code>[Priority, LeastWaste]</code> is the default.
 Maximum of 3 expanders can be specified.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>kubeClientQPS</code></br>
+<em>
+int32
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>kubeClientQPS sets the &ldquo;&ndash;kube-client-qps&rdquo; flag on cluster-autoscaler.
+Controls the maximum queries-per-second the autoscaler may send to the
+kube-apiserver. A negative value disables client-side rate limiting.
+When omitted, the flag is not set and the autoscaler uses its default (5).</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>kubeClientBurst</code></br>
+<em>
+int32
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>kubeClientBurst sets the &ldquo;&ndash;kube-client-burst&rdquo; flag on cluster-autoscaler.
+Controls the maximum burst of queries to the kube-apiserver.
+When omitted, the flag is not set and the autoscaler uses its default (10).</p>
 </td>
 </tr>
 </tbody>

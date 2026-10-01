@@ -5695,6 +5695,35 @@ If not specified, <code>[Priority, LeastWaste]</code> is the default.
 Maximum of 3 expanders can be specified.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>kubeClientQPS</code></br>
+<em>
+int32
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>kubeClientQPS sets the &ldquo;&ndash;kube-client-qps&rdquo; flag on cluster-autoscaler.
+Controls the maximum queries-per-second the autoscaler may send to the
+kube-apiserver. A negative value disables client-side rate limiting.
+When omitted, the flag is not set and the autoscaler uses its default (5).</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>kubeClientBurst</code></br>
+<em>
+int32
+</em>
+</td>
+<td>
+<em>(Optional)</em>
+<p>kubeClientBurst sets the &ldquo;&ndash;kube-client-burst&rdquo; flag on cluster-autoscaler.
+Controls the maximum burst of queries to the kube-apiserver.
+When omitted, the flag is not set and the autoscaler uses its default (10).</p>
+</td>
+</tr>
 </tbody>
 </table>
 ###ClusterConfiguration { #hypershift.openshift.io/v1beta1.ClusterConfiguration }

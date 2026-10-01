@@ -349,6 +349,22 @@ spec:
                     maxItems: 3
                     minItems: 1
                     type: array
+                  kubeClientBurst:
+                    description: |-
+                      kubeClientBurst sets the "--kube-client-burst" flag on cluster-autoscaler.
+                      Controls the maximum burst of queries to the kube-apiserver.
+                      When omitted, the flag is not set and the autoscaler uses its default (10).
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  kubeClientQPS:
+                    description: |-
+                      kubeClientQPS sets the "--kube-client-qps" flag on cluster-autoscaler.
+                      Controls the maximum queries-per-second the autoscaler may send to the
+                      kube-apiserver. A negative value disables client-side rate limiting.
+                      When omitted, the flag is not set and the autoscaler uses its default (5).
+                    format: int32
+                    type: integer
                   maxFreeDifferenceRatioPercent:
                     description: |-
                       maxFreeDifferenceRatioPercent sets the maximum difference ratio for free resources between similar node groups. This parameter controls how strict the similarity check is when comparing node groups for load balancing.
