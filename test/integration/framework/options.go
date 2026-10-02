@@ -29,11 +29,13 @@ type Mode string
 
 const (
 	// SetupMode sets up the HyperShift Operator, HostedClusters, and other infrastructure
-	// but does not run any test code. Test processes will wait on SIGINT after setup is
-	// complete, and run cleanup when interrupted.
+	// and exits when complete. Use TeardownMode (or ./test/integration/run.sh teardown) to clean up.
 	SetupMode Mode = "setup"
 	// TestMode runs test code and expects the environment to already be set up.
 	TestMode Mode = "test"
+	// TeardownMode removes HostedClusters, the HyperShift Operator, CRDs, and static assets
+	// previously installed by SetupMode, using rendered YAML under --artifact-dir.
+	TeardownMode Mode = "teardown"
 	// AllInOneMode is the default mode, where the process expects to both set up
 	// the test environment and run the test code.
 	AllInOneMode Mode = "all-in-one"
@@ -48,7 +50,7 @@ func newModeValue(val Mode, p *Mode) *modeValue {
 
 func (m *modeValue) Set(val string) error {
 	switch Mode(val) {
-	case AllInOneMode, SetupMode, TestMode:
+	case AllInOneMode, SetupMode, TestMode, TeardownMode:
 		break
 	default:
 		return fmt.Errorf("invalid mode %q", val)

@@ -149,6 +149,7 @@ func InstallHostedCluster(ctx context.Context, logger logr.Logger, opts *Options
 		"--release-image", pullSpec,
 		"--pull-secret", opts.PullSecret,
 		"--render",
+		"--render-sensitive",
 	}
 	if len(hostedClusterOpts.DebugDeployments) > 0 {
 		cmdArgs = append(cmdArgs, "--annotations", "hypershift.openshift.io/debug-deployments="+strings.Join(hostedClusterOpts.DebugDeployments, ","))
@@ -174,6 +175,16 @@ func InstallHostedCluster(ctx context.Context, logger logr.Logger, opts *Options
 	)
 	if err := RunCommand(logger, opts, applyLogPath, applyCmd); err != nil {
 		return CleanupSentinel, fmt.Errorf("failed to apply rendered artifacts: %w", err)
+	}
+
+	networkPolicyOff, err := KindNetworkPolicyOff()
+	if err != nil {
+		return CleanupSentinel, err
+	}
+	if networkPolicyOff {
+		if err := ensureIntegrationAllowAllNetworkPolicy(ctx, logger, opts, HostedClusterNamespace, hostedClusterName); err != nil {
+			return CleanupSentinel, err
+		}
 	}
 
 	cleanup := func(ctx context.Context) error {

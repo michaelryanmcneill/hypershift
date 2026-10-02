@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"testing"
+	"time"
 
 	hypershiftv1beta1 "github.com/openshift/hypershift/api/hypershift/v1beta1"
 	hypershiftclient "github.com/openshift/hypershift/client/clientset/clientset"
@@ -39,10 +40,19 @@ type Clients struct {
 // RunHostedClusterTest takes a test closure and invokes it once the HostedCluster is available. Tests for HostedCluster
 // functionality should use this entrypoint.
 func RunHostedClusterTest(ctx context.Context, logger logr.Logger, globalOpts *Options, t *testing.T, test func(t *testing.T, ctx *TestContext)) {
+	// SetupMode only applies HostedCluster assets and returns; teardown is explicit via TeardownMode.
+	if globalOpts.Mode == SetupMode {
+		_, _ = setupHostedCluster(ctx, logger, globalOpts, HostedClusterOptions{}, t)
+		return
+	}
+
 	var cleanups []Cleanup
 	defer func() {
 		t.Log("cleaning up...")
-		cleanupCtx := InterruptableContext(context.Background())
+		// Use a timeout rather than an interruptible context so a second Ctrl+C during
+		// teardown does not SIGKILL in-flight oc delete commands.
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		defer cancel()
 		for _, cleanup := range cleanups {
 			if err := cleanup(cleanupCtx); err != nil {
 				t.Errorf("failed to clean up: %v", err)
@@ -77,10 +87,17 @@ func RunHostedClusterTest(ctx context.Context, logger logr.Logger, globalOpts *O
 // waiting for the guest to be available, nor giving the test access to the guest cluster. Tests for the HyperShift Operator
 // are best suited for this entrypoint.
 func RunHyperShiftOperatorTest(ctx context.Context, logger logr.Logger, globalOpts *Options, hostedClusterOpts HostedClusterOptions, t *testing.T, test func(t *testing.T, ctx *ManagementTestContext)) {
+	// SetupMode only applies HostedCluster assets and returns; teardown is explicit via TeardownMode.
+	if globalOpts.Mode == SetupMode {
+		_, _ = setupHostedCluster(ctx, logger, globalOpts, hostedClusterOpts, t)
+		return
+	}
+
 	cleanup, testCtx := setupHostedCluster(ctx, logger, globalOpts, hostedClusterOpts, t)
 	defer func() {
 		t.Log("cleaning up...")
-		cleanupCtx := InterruptableContext(context.Background())
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		defer cancel()
 		if err := cleanup(cleanupCtx); err != nil {
 			t.Errorf("failed to clean up: %v", err)
 		}
@@ -106,14 +123,9 @@ func setupHostedCluster(ctx context.Context, logger logr.Logger, globalOpts *Opt
 		break
 	}
 
-	switch globalOpts.Mode {
-	case SetupMode:
-		t.Log("setup complete, waiting...")
-		waitCtx := InterruptableContext(context.Background())
-		<-waitCtx.Done()
-		return cleanup, nil
-	case TestMode, AllInOneMode:
-		break
+	if globalOpts.Mode == SetupMode {
+		t.Log("hosted cluster assets applied")
+		return CleanupSentinel, testCtx
 	}
 
 	cfg, err := LoadKubeConfig(opts.Kubeconfig)
